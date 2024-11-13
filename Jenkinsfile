@@ -1,42 +1,52 @@
 pipeline {
     agent any
+
+    environment {
+       AWS_CREDENTIALS_ID = 'aws-access-key' 
+    }
+
     stages {
-        stage("Build") {
+        stage('Clone Repository') {
             steps {
-                echo "Build stage."
+                echo 'Cloning repository...'
+                git 'https://github.com/yousefelhattab/Jenkins.git'  // Replace with your repo URL
             }
-            post {
-                always {
-                    echo "This block always runs after this stage."
+        }
+
+        stage('Terraform Init and Apply') {
+            steps {
+                echo 'Initializing Terraform...'
+                sh 'terraform init'
+                echo 'Applying Terraform plan...'
+                sh 'terraform apply -auto-approve'
+            }
+        }
+
+        stage('Get EC2 Public IP') {
+            steps {
+                script {
+                    // Fetch the public IP of the EC2 instance
+                    def instance = sh(script: 'terraform output -json instance_public_ip', returnStdout: true).trim()
+                    echo "EC2 instance public IP: ${instance}"
+                    env.EC2_PUBLIC_IP = instance
                 }
             }
         }
-        stage("Test") {
+
+        stage('Run Ansible Playbook') {
             steps {
-                echo "Test stage."
-                error ''
-                
-            }
-            post {
-                failure {
-                    echo "This block runs when the status of this stage is marked unstable."
-                }
-            }
-        }
-        stage("Release") {
-            steps {
-                echo "Release stage."
-            }
-            post {
-                success {
-                    echo "This block runs when the stage succeeded."
-                }
+                echo 'Running Ansible playbook...'
+                sh """
+                    ansible-playbook -i ${EC2_PUBLIC_IP}, -u ec2-user --private-key /path/to/private-key setup.yml
+                """
             }
         }
     }
+
     post {
         always {
-            echo "slackSend color: good message:this pipeline has been build sucessfully"
+            echo 'Cleaning up Terraform state...'
+            sh 'terraform destroy -auto-approve'
         }
     }
 }
