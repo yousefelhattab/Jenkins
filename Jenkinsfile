@@ -10,6 +10,7 @@ pipeline {
             steps {
                 echo 'Cloning repository...'
                 checkout scm
+                error ''
             }
         }
         stage('Initialize Terraform') {
