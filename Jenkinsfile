@@ -6,6 +6,9 @@ pipeline {
             steps {
                 echo 'Cloning repository...'
             }
+            steps {
+                echo 'Cloning repository2...'
+            }
         }  
     } // Closing the 'stages' block
 }
