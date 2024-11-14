@@ -1,3 +1,6 @@
+// Prompt for instance name before pipeline starts
+def instance_name = input message: 'Enter the instance name', parameters: [string(defaultValue: '', description: 'Name of the instance', name: 'instance_name')]
+
 pipeline {
     agent any
     stages {
@@ -20,12 +23,12 @@ pipeline {
                 }
             }
         }
-        stage('Prompt for Instance Name') {
+        stage('Generate Terraform Variables File') {
             steps {
                 script {
-                    // Prompt user for the instance name
-                    instance_name = input message: 'Enter the instance name', parameters: [string(defaultValue: '', description: 'Name of the instance', name: 'instance_name')]
-                    echo "Instance name entered: ${instance_name}"
+                    // Generate a terraform variable file with the instance name
+                    writeFile file: 'instance_name.tfvars', text: "instance_name = \"${instance_name}\"\n"
+                    echo "Terraform variable file generated with instance name: ${instance_name}"
                 }
             }
         }
@@ -33,8 +36,8 @@ pipeline {
             steps {
                 script {
                     withAWS(credentials: 'aws-credentials') {
-                        // Run terraform plan
-                        def planStatus = sh(script: 'terraform plan -out=tfplan', returnStatus: true)
+                        // Run terraform plan with the instance_name variable
+                        def planStatus = sh(script: 'terraform plan -var-file=instance_name.tfvars -out=tfplan', returnStatus: true)
                         if (planStatus != 0) {
                             error "Terraform Plan failed!"
                         }
@@ -46,8 +49,8 @@ pipeline {
             steps {
                 script {
                     withAWS(credentials: 'aws-credentials') {
-                        // Apply Terraform changes
-                        def applyStatus = sh(script: 'terraform apply -input=false tfplan', returnStatus: true)
+                        // Apply Terraform changes with the instance_name variable
+                        def applyStatus = sh(script: 'terraform apply -var-file=instance_name.tfvars -input=false tfplan', returnStatus: true)
                         if (applyStatus != 0) {
                             error "Terraform Apply failed!"
                         }
