@@ -21,6 +21,7 @@ module "ec2_instance" {
   
   vpc_security_group_ids = ["sg-0eb11d9a0361848f3"]
   subnet_id              = "subnet-02e7e46a9acf6627b"
+  associate_public_ip_address = true
 
   tags = {
     Terraform   = "true"
