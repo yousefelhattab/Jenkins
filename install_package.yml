@@ -1,0 +1,9 @@
+---
+- name: Install a package on EC2 instance
+  hosts: all
+  become: true
+  tasks:
+    - name: Install wget package
+      apt:
+        name: wget
+        state: present
