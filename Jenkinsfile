@@ -9,7 +9,9 @@ pipeline {
         stage('Terraform Init') {
             steps {
                 script {
+                    // Use the AWS credentials injected by the plugin
                     withAWS(credentials: 'aws-credentials') {
+                        // Initialize Terraform
                         def initStatus = sh(script: 'terraform init -input=false', returnStatus: true)
                         if (initStatus != 0) {
                             error "Terraform Init failed!"
@@ -22,6 +24,7 @@ pipeline {
             steps {
                 script {
                     withAWS(credentials: 'aws-credentials') {
+                        // Run terraform plan
                         def planStatus = sh(script: 'terraform plan -out=tfplan', returnStatus: true)
                         if (planStatus != 0) {
                             error "Terraform Plan failed!"
@@ -34,6 +37,7 @@ pipeline {
             steps {
                 script {
                     withAWS(credentials: 'aws-credentials') {
+                        // Apply Terraform changes
                         def applyStatus = sh(script: 'terraform apply -input=false tfplan', returnStatus: true)
                         if (applyStatus != 0) {
                             error "Terraform Apply failed!"
@@ -42,16 +46,16 @@ pipeline {
                 }
             }
         }
-       
+    }
     post {
         always {
             echo 'Pipeline finished'
         }
         success {
-            echo 'Terraform applied  executed successfully'
+            echo 'Terraform applied successfully'
         }
         failure {
-            echo 'Terraform apply or Ansible playbook failed'
+            echo 'Terraform apply failed'
         }
     }
 }
