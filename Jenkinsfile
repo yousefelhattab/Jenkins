@@ -64,7 +64,7 @@ ansible_ssh_private_key_file=${env.WORKSPACE}/ansible.pem
             steps {
                 script {
                     // Use withCredentials to inject the private key to the workspace
-                    withCredentials([file(credentialsId: 'ansible-ssh-key', variable: 'SSH_KEY')]) {
+                    withCredentials([file(credentialsId: 'ansible', variable: 'SSH_KEY')]) {
                         // Move the private key to the workspace directory
                         sh """
                             cp ${SSH_KEY} ${env.WORKSPACE}/ansible.pem
