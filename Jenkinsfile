@@ -20,6 +20,15 @@ pipeline {
                 }
             }
         }
+        stage('Prompt for Instance Name') {
+            steps {
+                script {
+                    // Prompt user for the instance name
+                    instance_name = input message: 'Enter the instance name', parameters: [string(defaultValue: '', description: 'Name of the instance', name: 'instance_name')]
+                    echo "Instance name entered: ${instance_name}"
+                }
+            }
+        }
         stage('Terraform Plan') {
             steps {
                 script {
