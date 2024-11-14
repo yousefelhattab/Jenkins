@@ -1,52 +1,34 @@
 pipeline {
     agent any
-
     environment {
-       AWS_CREDENTIALS_ID = 'aws-access-key' 
+        AWS_REGION = 'us-east-1' // Set your AWS region
     }
-
     stages {
-        stage('Clone Repository') {
-            steps {
-                echo 'Cloning repository...'
-                git 'https://github.com/yousefelhattab/Jenkins.git'  // Replace with your repo URL
-            }
-        }
-
-        stage('Terraform Init and Apply') {
-            steps {
-                echo 'Initializing Terraform...'
-                sh 'terraform init'
-                echo 'Applying Terraform plan...'
-                sh 'terraform apply -auto-approve'
-            }
-        }
-
-        stage('Get EC2 Public IP') {
+        stage('Launch EC2 Instance') {
             steps {
                 script {
-                    // Fetch the public IP of the EC2 instance
-                    def instance = sh(script: 'terraform output -json instance_public_ip', returnStdout: true).trim()
-                    echo "EC2 instance public IP: ${instance}"
-                    env.EC2_PUBLIC_IP = instance
+                    // Replace with your AMI ID, instance type, and security group
+                    def amiId = 'ami-063d43db0594b521b'
+                    def instanceType = 't2.micro'
+                    def keyName = 'ansible'
+                    def securityGroup = 'sg-0eb11d9a0361848f3'
+
+                    withAWS(credentials: 'aws-credentials', region: AWS_REGION) {
+                        def result = aws(
+                            command: 'ec2 run-instances',
+                            arguments: [
+                                "--image-id ${amiId}",
+                                "--count 1",
+                                "--instance-type ${instanceType}",
+                                "--key-name ${keyName}",
+                                "--security-group-ids ${securityGroup}",
+                                "--tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Jenkins-EC2}]'"
+                            ].join(' ')
+                        )
+                        echo "EC2 Instance Created: ${result}"
+                    }
                 }
             }
-        }
-
-        stage('Run Ansible Playbook') {
-            steps {
-                echo 'Running Ansible playbook...'
-                sh """
-                    ansible-playbook -i ${EC2_PUBLIC_IP}, -u ec2-user --private-key /path/to/private-key setup.yml
-                """
-            }
-        }
-    }
-
-    post {
-        always {
-            echo 'Cleaning up Terraform state...'
-            sh 'terraform destroy -auto-approve'
         }
     }
 }
