@@ -1,17 +1,11 @@
 pipeline {
     agent any
-
-    parameters {
-        string(name: 'INSTANCE_NAME', defaultValue: 'JenkinsInstance', description: 'Name of the EC2 instance')
-    }
-
     stages {
         stage('Checkout from Git') {
             steps {
-                git branch: 'main', url: 'https://github.com/yousefelhattab/Jenkins.git'
+                git branch: 'main', url: 'https://github.com/yousefelhattab/Jenkins'
             }
         }
-
         stage('Terraform Init') {
             steps {
                 script {
@@ -26,23 +20,12 @@ pipeline {
                 }
             }
         }
-
-        stage('Generate Terraform Variables File') {
-            steps {
-                script {
-                    // Generate a terraform variable file with the instance name from the parameter
-                    writeFile file: 'terraform.tfvars', text: "instance_name = \"${params.INSTANCE_NAME}\"\n"
-                    echo "Terraform variable file generated with instance name: ${params.INSTANCE_NAME}"
-                }
-            }
-        }
-
         stage('Terraform Plan') {
             steps {
                 script {
                     withAWS(credentials: 'aws-credentials') {
-                        // Run terraform plan with the instance_name variable
-                        def planStatus = sh(script: 'terraform plan -var-file=terraform.tfvars -out=tfplan', returnStatus: true)
+                        // Run terraform plan
+                        def planStatus = sh(script: 'terraform plan -out=tfplan', returnStatus: true)
                         if (planStatus != 0) {
                             error "Terraform Plan failed!"
                         }
@@ -50,13 +33,12 @@ pipeline {
                 }
             }
         }
-
         stage('Terraform Apply') {
             steps {
                 script {
                     withAWS(credentials: 'aws-credentials') {
-                        // Apply Terraform changes with the instance_name variable
-                        def applyStatus = sh(script: 'terraform apply -var-file=terraform.tfvars -input=false tfplan', returnStatus: true)
+                        // Apply Terraform changes
+                        def applyStatus = sh(script: 'terraform apply -input=false tfplan', returnStatus: true)
                         if (applyStatus != 0) {
                             error "Terraform Apply failed!"
                         }
@@ -65,7 +47,6 @@ pipeline {
             }
         }
     }
-
     post {
         always {
             echo 'Pipeline finished'
@@ -78,3 +59,4 @@ pipeline {
         }
     }
 }
+
