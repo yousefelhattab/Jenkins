@@ -15,29 +15,25 @@ pipeline {
                     def tagSpecifications = "ResourceType=instance,Tags=[{Key=Name,Value=Jenkins-EC2}]"
 
                     withAWS(credentials: 'aws-credentials', region: AWS_REGION) {
-                        // Run the EC2 instance creation command
-                        def result = aws(
-                            command: 'ec2 run-instances',
-                            arguments: [
-                                "--image-id ${amiId}",
-                                "--count 1",
-                                "--instance-type ${instanceType}",
-                                "--key-name ${keyName}",
-                                "--security-group-ids ${securityGroup}",
-                                "--tag-specifications '${tagSpecifications}'"
-                            ].join(' ')
-                        )
-                        
-                        // Log output and check for issues
-                        echo "AWS CLI Output: ${result.stdout ?: 'No standard output'}"
-                        echo "AWS CLI Error: ${result.stderr ?: 'No error output'}"
-                        
-                        // Validate successful response
-                        if (result.stderr) {
-                            error "Failed to create EC2 instance: ${result.stderr}"
-                        } else {
+                        try {
+                            def result = sh(
+                                script: """
+                                    aws ec2 run-instances \
+                                    --image-id ${amiId} \
+                                    --count 1 \
+                                    --instance-type ${instanceType} \
+                                    --key-name ${keyName} \
+                                    --security-group-ids ${securityGroup} \
+                                    --tag-specifications '${tagSpecifications}' \
+                                    --region ${AWS_REGION}
+                                """,
+                                returnStdout: true
+                            ).trim()
+
                             echo "EC2 Instance created successfully!"
-                            echo "Response: ${result.stdout}"
+                            echo "AWS CLI Output: ${result}"
+                        } catch (Exception e) {
+                            error "Failed to create EC2 instance: ${e.getMessage()}"
                         }
                     }
                 }
