@@ -17,7 +17,7 @@ module "ec2_instance" {
 
   instance_type          = "t2.micro"
   key_name               = "ansible"
-  monitoring             = true
+  
   vpc_security_group_ids = ["sg-0eb11d9a0361848f3"]
   subnet_id              = "subnet-02e7e46a9acf6627b"
 
