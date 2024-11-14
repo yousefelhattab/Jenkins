@@ -42,46 +42,13 @@ pipeline {
                 }
             }
         }
-        stage('Capture EC2 Public IP') {
-            steps {
-                script {
-                    def ec2PublicIP = sh(script: 'terraform output -raw ec2_public_ip', returnStdout: true).trim()
-                    echo "EC2 Public IP: ${ec2PublicIP}"
-
-                    // Create a dynamic Ansible inventory file
-                    writeFile(file: 'inventory.ini', text: """
-[ec2_instance]
-${ec2PublicIP}
-
-[ec2_instance:vars]
-ansible_ssh_user=ec2-user
-ansible_ssh_private_key_file=${env.WORKSPACE}/ansible.pem
-""")
-                }
-            }
-        }
-        stage('Run Ansible Playbook') {
-            steps {
-                script {
-                    withCredentials([file(credentialsId: 'ansible', variable: 'SSH_KEY')]) {
-                        // Copy and set the correct permissions for the SSH private key
-                        sh """
-                            cp ${SSH_KEY} ${env.WORKSPACE}/ansible.pem
-                            chmod 400 ${env.WORKSPACE}/ansible.pem
-                            source myenv/bin/activate
-                            ansible-playbook install_package.yml -i inventory.ini
-                        """
-                    }
-                }
-            }
-        }
-    }
+       
     post {
         always {
             echo 'Pipeline finished'
         }
         success {
-            echo 'Terraform applied and Ansible playbook executed successfully'
+            echo 'Terraform applied  executed successfully'
         }
         failure {
             echo 'Terraform apply or Ansible playbook failed'
