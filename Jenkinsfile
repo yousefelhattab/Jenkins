@@ -1,5 +1,5 @@
 // Prompt for instance name before pipeline starts
-def instance_name = input message: 'Enter the instance name', parameters: [string(defaultValue: '', description: 'Name of the instance', name: 'instance_name')]
+def instance_name = input message: 'Enter the instance name', parameters: [string(defaultValue: '', description: 'Name of the EC2 instance', name: 'instance_name')]
 
 pipeline {
     agent any
