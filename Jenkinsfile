@@ -60,7 +60,7 @@ ${ec2PublicIP}
 
 [ec2_instance:vars]
 ansible_ssh_user=ec2-user
-ansible_ssh_private_key_file=/path/to/your/ansible.pem
+
 """)
                 }
             }
@@ -68,10 +68,9 @@ ansible_ssh_private_key_file=/path/to/your/ansible.pem
        stage('Run Ansible Playbook') {
     steps {
         script {
-            // Activate the virtual environment and run the Ansible playbook
+            // Run with bash explicitly
             sh '''
-                source myenv/bin/activate
-                ansible-playbook install_package.yml -i inventory.ini
+                bash -c "source myenv/bin/activate && ansible-playbook install_package.yml -i inventory.ini"
             '''
         }
     }
