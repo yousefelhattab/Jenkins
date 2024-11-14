@@ -1,44 +1,28 @@
-pipeline {
-    agent any
-    environment {
-        AWS_REGION = 'us-east-1' // Set your AWS region
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "5.5.0"
     }
-    stages {
-        stage('Launch EC2 Instance') {
-            steps {
-                script {
-                    // Configuration variables
-                    def amiId = 'ami-063d43db0594b521b'
-                    def instanceType = 't2.micro'
-                    def keyName = 'ansible'
-                    def securityGroup = 'sg-0eb11d9a0361848f3'
-                    def tagSpecifications = "ResourceType=instance,Tags=[{Key=Name,Value=Jenkins-EC2}]"
-
-                    withAWS(credentials: 'aws-credentials', region: AWS_REGION) {
-                        try {
-                            def result = sh(
-                                script: """
-                                    aws ec2 run-instances \
-                                    --image-id ${amiId} \
-                                    --count 1 \
-                                    --instance-type ${instanceType} \
-                                    --key-name ${keyName} \
-                                    --security-group-ids ${securityGroup} \
-                                    --tag-specifications '${tagSpecifications}' \
-                                    --region ${AWS_REGION}
-                                """,
-                                returnStdout: true
-                            ).trim()
-
-                            echo "EC2 Instance created successfully!"
-                            echo "AWS CLI Output: ${result}"
-                        } catch (Exception e) {
-                            error "Failed to create EC2 instance: ${e.getMessage()}"
-                        }
-                    }
-                }
-            }
-        }
-    }
+  }
 }
 
+provider "aws" {
+  region = "us-east-1"
+}
+module "ec2_instance" {
+  source  = "terraform-aws-modules/ec2-instance/aws"
+
+  name = "t1"
+
+  instance_type          = "t2.micro"
+  key_name               = "ansible"
+  monitoring             = true
+  vpc_security_group_ids = ["sg-0eb11d9a0361848f3"]
+  subnet_id              = "subnet-02e7e46a9acf6627b"
+
+  tags = {
+    Terraform   = "true"
+    Environment = "dev"
+  }
+}
