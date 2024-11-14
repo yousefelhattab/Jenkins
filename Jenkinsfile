@@ -1,8 +1,8 @@
-// Prompt for instance name before pipeline starts
-def instance_name = input message: 'Enter the instance name', parameters: [string(defaultValue: '', description: 'Name of the EC2 instance', name: 'instance_name')]
-
 pipeline {
     agent any
+    parameters {
+        string(name: 'INSTANCE_NAME', defaultValue: 'JenkinsInstance', description: 'Name of the EC2 instance')
+    }
     stages {
         stage('Checkout from Git') {
             steps {
@@ -26,48 +26,4 @@ pipeline {
         stage('Generate Terraform Variables File') {
             steps {
                 script {
-                    // Generate a terraform variable file with the instance name
-                    writeFile file: 'terraform.tfvars', text: "instance_name = \"${instance_name}\"\n"
-                    echo "Terraform variable file generated with instance name: ${instance_name}"
-                }
-            }
-        }
-        stage('Terraform Plan') {
-            steps {
-                script {
-                    withAWS(credentials: 'aws-credentials') {
-                        // Run terraform plan with the instance_name variable
-                        def planStatus = sh(script: 'terraform plan -var-file=terraform.tfvars -out=tfplan', returnStatus: true)
-                        if (planStatus != 0) {
-                            error "Terraform Plan failed!"
-                        }
-                    }
-                }
-            }
-        }
-        stage('Terraform Apply') {
-            steps {
-                script {
-                    withAWS(credentials: 'aws-credentials') {
-                        // Apply Terraform changes with the instance_name variable
-                        def applyStatus = sh(script: 'terraform apply -var-file=terraform.tfvars -input=false tfplan', returnStatus: true)
-                        if (applyStatus != 0) {
-                            error "Terraform Apply failed!"
-                        }
-                    }
-                }
-            }
-        }
-    }
-    post {
-        always {
-            echo 'Pipeline finished'
-        }
-        success {
-            echo 'Terraform applied successfully'
-        }
-        failure {
-            echo 'Terraform apply failed'
-        }
-    }
-}
+    
