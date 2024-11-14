@@ -65,17 +65,17 @@ ansible_ssh_private_key_file=/path/to/your/ansible.pem
                 }
             }
         }
-        stage('Run Ansible Playbook') {
-            steps {
-                script {
-                    // Run the Ansible playbook using the generated inventory file
-                    ansiblePlaybook(
-                        playbook: 'install_package.yml',
-                        inventory: 'inventory.ini'
-                    )
-                }
-            }
+       stage('Run Ansible Playbook') {
+    steps {
+        script {
+            // Activate the virtual environment and run the Ansible playbook
+            sh '''
+                source myenv/bin/activate
+                ansible-playbook install_package.yml -i inventory.ini
+            '''
         }
+    }
+}
     }
     post {
         always {
